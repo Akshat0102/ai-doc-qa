@@ -1,5 +1,5 @@
 from utils.file_loader import load_file
-from utils.token_chunker import token_chunk_text
+from utils.chunker_token import token_chunk_text
 from utils.embeddings import JinaEmbedding
 from services.vector_store import VectorStore
 from config.settings import settings
