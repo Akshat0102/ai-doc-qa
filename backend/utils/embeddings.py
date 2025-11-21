@@ -1,8 +1,11 @@
 import os
 import httpx
+import dotenv
+
+dotenv.load_dotenv('.env')
 
 JINA_API_URL = "https://api.jina.ai/v1/embeddings"
-JINA_API_KEY = os.getenv("JINA_API_KEY")
+JINA_API_KEY = os.getenv('JINA_API_KEY')
 
 headers = {
     "Authorization": f"Bearer {JINA_API_KEY}",

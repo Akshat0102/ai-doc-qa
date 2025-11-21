@@ -2,9 +2,12 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import shutil
+import dotenv
 from services.rag_service import RAGService
 
 app = FastAPI(title="AI Document Q&A RAG API", version="1.0")
+
+dotenv.load_dotenv('.env')   
 
 rag = RAGService()
 
@@ -25,7 +28,7 @@ def health_check():
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     try:
-        upload_dir = "backend/uploads"
+        upload_dir = "data/uploads"
         os.makedirs(upload_dir, exist_ok=True)
 
         file_path = os.path.join(upload_dir, file.filename)
@@ -33,7 +36,7 @@ async def upload_file(file: UploadFile = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        result = rag.ingest_document(file_path)
+        result = await rag.ingest_document(file_path)
         return {"message": "File processed successfully", "details": result}
 
     except Exception as e:
