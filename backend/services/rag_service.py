@@ -6,12 +6,15 @@ from utils.vector_store import VectorStore
 from typing import List
 from openai import OpenAI
 import logging
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 
 class RAGService:
+
     def __init__(self):
         self.vector_store = VectorStore()
+
 
     async def ingest_document(self, file_path: str):
         
@@ -23,10 +26,7 @@ class RAGService:
         logging.info(f"[RAG] Total chunks: {len(chunks)}")
 
         logging.info("[RAG] Generating embeddings...")
-        embeddings = []
-        for chunk in chunks:
-            embedding = await get_embedding(chunk)
-            embeddings.append(embedding)
+        embeddings = await asyncio.gather(*(get_embedding(chunk) for chunk in chunks))
 
         logging.info("[RAG] Storing in vector DB...")
         
@@ -37,16 +37,18 @@ class RAGService:
         )
         return {"status": "success", "chunks_added": len(chunks)}
 
-    def retrieve(self, query: str, top_k: int = 4):
+
+    async def retrieve(self, query: str, top_k: int = 4):
         """
         Vector search: embed query + find top chunks.
         """
-        query_embedding = self.embedder.embed(query)
+        query_embedding = await get_embedding(query)
         return self.vector_store.search(query_embedding, top_k)
 
-    def generate_answer(self, query: str, model="gpt-4o-mini"):
+
+    async def generate_answer(self, query: str, model="gpt-4o-mini"):
         
-        retrieved = self.retrieve(query)
+        retrieved = await self.retrieve(query)
         
         if not retrieved:
             return "No relevant information found in the knowledge base."
@@ -76,4 +78,4 @@ You are an AI assistant. Use ONLY the provided context.
             ]
         )
         logging.info("[RAG] Received response from OpenAI API.")
-        return response.choices[0].message["content"]
+        return response.choices[0].message.content

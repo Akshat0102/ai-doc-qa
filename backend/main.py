@@ -13,7 +13,7 @@ rag = RAGService()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # (You can restrict later)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,7 +50,7 @@ async def query_rag(payload: dict):
         if not question:
             raise HTTPException(status_code=400, detail="Missing 'question' field")
 
-        answer = rag.generate_answer(question)
+        answer = await rag.generate_answer(question)
         return {"answer": answer}
 
     except Exception as e:
