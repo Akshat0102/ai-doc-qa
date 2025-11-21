@@ -25,3 +25,5 @@ tqdm==4.67.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.38.0
+PyPDF2==3.0.1
+python-docx==1.2.0
