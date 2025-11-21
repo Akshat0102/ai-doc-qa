@@ -11,7 +11,7 @@ def load_text(file_path: str) -> str:
         return f.read()
 
 
-def load_path(file_path: str) -> str:
+def load_pdf(file_path: str) -> str:
 
     """Function to extract text from PDF files using PyPDF2 library"""
 

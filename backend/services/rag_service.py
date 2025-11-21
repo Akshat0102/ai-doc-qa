@@ -1,8 +1,8 @@
+import os
 from utils.file_loader import load_file
 from utils.chunker_token import token_chunk_text
-from utils.embeddings import JinaEmbedding
-from services.vector_store import VectorStore
-from config.settings import settings
+from utils.embeddings import get_embedding
+from utils.vector_store import VectorStore
 from typing import List
 from openai import OpenAI
 import logging
@@ -11,13 +11,10 @@ logging.basicConfig(level=logging.INFO)
 
 class RAGService:
     def __init__(self):
-        self.embedder = JinaEmbedding()
         self.vector_store = VectorStore()
 
-    def ingest_document(self, file_path: str):
-        """
-        Load → chunk → embed → store a document.
-        """
+    async def ingest_document(self, file_path: str):
+        
         logging.info(f"[RAG] Loading file: {file_path}")
         text = load_file(file_path)
 
@@ -26,11 +23,18 @@ class RAGService:
         logging.info(f"[RAG] Total chunks: {len(chunks)}")
 
         logging.info("[RAG] Generating embeddings...")
-        embeddings = self.embedder.embed_batch(chunks)
+        embeddings = []
+        for chunk in chunks:
+            embedding = await get_embedding(chunk)
+            embeddings.append(embedding)
 
         logging.info("[RAG] Storing in vector DB...")
-        self.vector_store.add_texts(chunks, embeddings)
-
+        
+        self.vector_store.add_documents(
+            embeddings=embeddings,
+            chunks=chunks,
+            metadatas=[{"source": file_path}] * len(chunks)
+        )
         return {"status": "success", "chunks_added": len(chunks)}
 
     def retrieve(self, query: str, top_k: int = 4):
@@ -61,7 +65,7 @@ You are an AI assistant. Use ONLY the provided context.
 ### ANSWER:
 """
 
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
         logging.info("[RAG] Sending query to OpenAI API...")
         response = client.chat.completions.create(
